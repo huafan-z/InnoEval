@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="InnoEval.vcxproj" Id="c8640443-f82c-4e8c-8330-40be62addffa" />
+</Solution>
