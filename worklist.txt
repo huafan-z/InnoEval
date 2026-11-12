@@ -1,1 +1,1 @@
-MAX_ID = 0, WORKSUM = 0
+MAX_ID = 0

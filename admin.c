@@ -4,11 +4,8 @@
 #include <stdlib.h>
 #include "common.h"
 #include "list.h"
-
-
-
+#define MAX_RESULT 50
 int adm_login(void) {
-
 	const char* correct_user = "admin";
 	const char* correct_pwd = "123456";
 	char in_user[20];
@@ -16,9 +13,7 @@ int adm_login(void) {
 	//校验账号和密码
 	int fail_count = 0;
 	while (fail_count < 3) { //错3次退出
-		printf("\nUsername: ");
 		safelogin(in_user, sizeof(in_user), "Username: ");
-		printf("Password: ");
 		safelogin(in_pwd, sizeof(in_pwd), "Password: ");
 		//校验（拦截空输入 + 比较内容）
 		if (in_user[0] == '\0' || in_pwd[0] == '\0') {
@@ -42,7 +37,16 @@ int adm_login(void) {
 void adm_run(void) {
 	while (1) {
 		system("cls");
-		list_adm_run();
+		printf("====Welcome admin!====\n");
+		printf("1. Create work(s)\n");//创建作品
+		printf("2. Delete work\n");//删除作品
+		printf("3. Query works\n");//查询作品
+		printf("4. Revise a work\n");//修改作品
+		printf("5. Publish work\n");//发布作品
+		printf("6. Save work\n");//保存作品
+		printf("7. Calculate the average score\n");//计算平均分
+		printf("8. Sorting of works\n");//作品排序
+		printf("9. Exit system\n");//退出系统
 		int choice = safenumber(1, 9, "Please enter your choice (1-9): ");
 		switch (choice) {
 			case 1: createWork(); break;
@@ -95,8 +99,8 @@ void createWork(void) {
 		system("cls");
 		if (is_again) printf("Please input the informations again!\n");
 		work tem_work = create();
-		char confirm = safechar("Confirm this information?(y/n): ");
-		if (confirm != 'y' && confirm != 'Y') {//用户确认信息
+		char confirm = safechar("yn", "Confirm this information?(y/n): ");
+		if (confirm != 'y') {//用户确认信息
 			is_again = 1;
 			printf("1. again\n2. return\n");
 			int choice = safenumber(1, 2, "Do you want to create again?(1 or 2): ");
@@ -118,8 +122,8 @@ void createWork(void) {
 		go_on();
 		system("cls");
 		i++;
-		char is_continue = safechar("Do you want to continue creating? (y/n): ");
-		if (is_continue == 'y' || is_continue == 'Y') continue;
+		char is_continue = safechar("yn", "Do you want to continue creating? (y/n): ");
+		if (is_continue == 'y') continue;
 		else {
 			if (i - 1 == 1) printf("Cancelled. One work created in total.\n");
 			else printf("Cancelled. %d works created in total.\n", i - 1);
@@ -139,8 +143,8 @@ void deleteWork(void) {
 	Node** link = find_id(id);
 	if (link) {
 		print_work(&(*link)->data);
-		char confirm = safechar("\n\nAre you sure to delete this work? (y/n): ");
-		if (confirm == 'y' || confirm == 'Y') {
+		char confirm = safechar("yn", "\n\nAre you sure to delete this work? (y/n): ");
+		if (confirm == 'y') {
 			delete_Node(link);
 			printf("\n[Success] Deleted ID %d.\n", id);
 		}
@@ -151,53 +155,61 @@ void deleteWork(void) {
 	}
 	go_on();
 }
-
-
-
-
-
 void queryWork(void) {
 	system("cls");
 	if (!listwork_head) {
-		printf("\nList is empty.\n");
+		printf("List is empty.\n");
 		go_on();
 		return;
 	}
-	list_queryWork();
-	int found_count = 0;
+	printf("\n==== Query Works ====\n");
+	printf("1. Query by ID\n");//ID查找
+	printf("2. Query by Title\n");//作品名查找
+	printf("3. Query by Author Name\n");//作者名查找
+	printf("4. Query by Student ID\n");//作者学号查找
+	printf("5. Query by Keyword\n");//作品名关键词查找
 	int choice = safenumber(1, 5, "Select a query method (1-5): ");
+	printf("\n");
+	work outWork[MAX_RESULT];
 	switch (choice) {
-		case 1: {
+		case 1: {//找到直接打印并允许退出查询
+			system("cls");
 			int id = safenumber(1, MAX_ID > 0 ? MAX_ID : 1, "Enter Work ID: ");
-			found_count = find_by_id(id);
+			Node** link = find_id(id);
+			if (link) print_work(&(*link)->data);
+			else printf("Work with ID %d not found.\n", id);
+			go_on();
 			break;
 		}
-		case 2: {
+		case 2: {//2、3、4、5都要经过分页层
 			char title[64];
 			safestr(title, sizeof(title), "Enter Title: ");
-			found_count = find_by_title(title);
+			if(!queryOut(outWork, MAX_RESULT, find_by_title, title))
+				printf("No work titled \"%s\".\n", title);
 			break;
 		}
 		case 3: {
 			char author[32];
 			safestr(author, sizeof(author), "Enter Author Name: ");
-			found_count = find_by_author(author);
+			if (!queryOut(outWork, MAX_RESULT, find_by_author, author))
+				printf("No work by author \"%s\".\n", author);
 			break;
 		}
 		case 4: {
 			char stu_id[20];
 			safestr(stu_id, sizeof(stu_id), "Enter Student ID: ");
-			found_count = find_by_student_id(stu_id);
+			if (!queryOut(outWork, MAX_RESULT, find_by_student_id, stu_id))
+				printf("No work with student ID \"%s\".\n", stu_id);
 			break;
 		}
 		case 5: {
 			char keyword[64];
 			safestr(keyword, sizeof(keyword), "Enter Keyword: ");
-			found_count = find_by_keyword(keyword);
+			if (!queryOut(outWork, MAX_RESULT, find_by_keyword, keyword))
+				printf("No work matching \"%s\".\n", keyword);
 			break;
 		}
 	}
-	go_on();
 }
 
 
@@ -205,9 +217,14 @@ void queryWork(void) {
 
 
 
+void modifyWork(void) {
+
+}
 
 
-void modifyWork(void) {}
+
+
+
 void publishWork(void) {}
 void saveWork(void) {}
 void calcAverageScore(void) {}
@@ -216,31 +233,6 @@ void sortWork(void) {}
 
 
 
-
-
-
-
-
-void list_adm_run(void) {
-	printf("====Welcome admin!====\n");
-	printf("1. Create work(s)\n");//创建作品
-	printf("2. Delete work\n");//删除作品
-	printf("3. Query works\n");//查询作品
-	printf("4. Revise a work\n");//修改作品
-	printf("5. Publish work\n");//发布作品
-	printf("6. Save work\n");//保存作品
-	printf("7. Calculate the average score\n");//计算平均分
-	printf("8. Sorting of works\n");//作品排序
-	printf("9. Exit system\n");//退出系统
-}
-void list_queryWork(void) {
-	printf("\n==== Query Works ====\n");
-	printf("1. Query by ID\n");//ID查找
-	printf("2. Query by Title\n");//作品名查找
-	printf("3. Query by Author Name\n");//作者名查找
-	printf("4. Query by Student ID\n");//作者学号查找
-	printf("5. Query by Keyword\n");//作品名关键词查找
-}
 
 
 

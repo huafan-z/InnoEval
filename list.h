@@ -24,21 +24,19 @@ typedef struct Node {
 
 
 
-void loadWorkFromFile(void);
+int loadWorkFromFile(void);
 
 
 void addNode(work* new_work);
 Node** find_id(int id);
 void delete_Node(Node** link);
-void print_work(work* w);
 
 
 
-int find_by_id(int id);// 1. ID 查找(返回一条)
-int find_by_title(const char* title);// 2. 作品名查找 (重名 可能多条)
-int find_by_author(const char* author_name);// 3. 按作者名查 (同作者 可能多条)
-int find_by_student_id(const char* stu_id);// 4. 按学号查 (同作者 可能多条)
-int find_by_keyword(const char* keyword);// 5. 按关键词查 (模糊匹配，多条) -> 核心用到 strstr
+Node* find_by_title(Node* p, const char* title);// 2. 作品名查找 (重名 可能多条)
+Node* find_by_author(Node* p, const char* title);// 3. 按作者名查 (同作者 可能多条)
+Node* find_by_student_id(Node* p, const char* title);// 4. 按学号查 (同作者 可能多条)
+Node* find_by_keyword(Node* p, const char* title);// 5. 按关键词查 (模糊匹配，多条) -> 核心用到 strstr
 
 
 

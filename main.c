@@ -5,7 +5,11 @@
 #include "admin.h"
 #include "judge.h"
 int main() {
-	loadWorkFromFile();
+	if (!loadWorkFromFile()) {
+		printf("System cannot start without data file.\n");
+		go_on();
+		return 1;// 不进系统
+	}
 	//adm_run();
 	while (1) {
 		int is_againnum = 0;//是否再进入的标志
