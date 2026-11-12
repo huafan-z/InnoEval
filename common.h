@@ -14,6 +14,7 @@ void safestr(char* str, int n, char* msg);
 int safenumber(int min, int max, char* msg);
 void go_on(void);
 void print_work(const work* w);
+void print_work_simple(const work* w);
 void printOnePAGE(const work* outWork, int count);
 void printPAGE(const work* outWor, int count);
 int chooserole(void);
