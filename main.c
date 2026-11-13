@@ -12,7 +12,6 @@ int main() {
 	}
 	//adm_run();
 	while (1) {
-		int is_againnum = 0;//是否再进入的标志
 		int choice = chooserole(),//身份选择
 			adm_pass = 0, jud_pass = 0;//adm或jud的成功登录标志
 		switch (choice) {
@@ -25,9 +24,9 @@ int main() {
 		else if (jud_pass == 1 && choice == 2) {//登录成功进入jud主界面
 			jud_run();
 		}
-		else return 0;
+		else continue;
 		//是否再次进入system
-		is_againnum = is_again();
+		int is_againnum = is_again();
 		if (is_againnum) continue;
 		else break;
 	}

@@ -20,7 +20,6 @@ int loadWorkFromFile(void){
 	}
 	if (fgets(line, sizeof(line), listfile) != NULL) {//读第一行的参数
 		line[strcspn(line, "\n")] = '\0';
-		sscanf(line, "MAX_ID = %d", &MAX_ID);
 		if (sscanf(line, "MAX_ID = %d", &MAX_ID) != 1) {
 			printf("[Error] Invalid header. Using MAX_ID = 0.\n");
 			MAX_ID = 0;

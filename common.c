@@ -323,7 +323,7 @@ void UnpubOne(void) {
 		double sum = 0.0;
 		for (int i = 0;i < 5;++i) sum += (*link)->data.scores[i];
 		if (fabs(sum) > EPS) {
-			printf("\n[Error] Work ID %d has scores and cannot be unpublished.\n");
+			printf("\n[Error] Work ID %d has scores and cannot be unpublished.\n", id);
 			return;
 		}
 		char confirm = safechar("yn", "Unpublish this work? (y/n): ");

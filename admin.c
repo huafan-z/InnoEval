@@ -238,6 +238,7 @@ void modifyWork(void) {
 		printf("Tip: use [3] Query works first if you are not sure of the ID.\n");
 		printf("Enter 0 to cancel.\n\n");
 		int id = safenumber(0, MAX_ID > 0 ? MAX_ID : 1, "Work's ID: ");
+		if (id == 0) return;
 		Node** link = find_id(id);
 		if (link) {
 			if ((*link)->data.is_published) {
