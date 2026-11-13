@@ -37,9 +37,9 @@ Node* find_by_title(Node* p, const char* title);// 2. 作品名查找 (重名 �
 Node* find_by_author(Node* p, const char* title);// 3. 按作者名查 (同作者 可能多条)
 Node* find_by_student_id(Node* p, const char* title);// 4. 按学号查 (同作者 可能多条)
 Node* find_by_keyword(Node* p, const char* title);// 5. 按关键词查 (模糊匹配，多条) -> 核心用到 strstr
+void Publish_All(void);
 
-
-
+void WorkToFile(void);
 
 
 

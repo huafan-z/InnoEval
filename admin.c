@@ -41,14 +41,15 @@ void adm_run(void) {
 		printf("1. Create work(s)\n");//创建作品
 		printf("2. Delete work\n");//删除作品
 		printf("3. Query works\n");//查询作品
-		printf("4. Revise a work\n");//修改作品
-		printf("5. Publish work\n");//发布作品
+		printf("4. Modify a work\n");//修改作品
+		printf("5. Publish work(s) / Unpublish a work\n");//发布/撤回 作品
 		printf("6. Save work\n");//保存作品
 		printf("7. Calculate the average score\n");//计算平均分
 		printf("8. Sorting of works\n");//作品排序
-		printf("9. Exit system\n");//退出系统
-		int choice = safenumber(1, 9, "Please enter your choice (1-9): ");
+		printf("0. Exit system\n");//退出系统
+		int choice = safenumber(0, 8, "Please enter your choice (0-8): ");
 		switch (choice) {
+			case 0: return;
 			case 1: createWork(); break;
 			case 2: deleteWork(); break;
 			case 3: queryWork(); break;
@@ -57,7 +58,6 @@ void adm_run(void) {
 			case 6: saveWork(); break;
 			case 7: calcAverageScore(); break;
 			case 8: sortWork(); break;
-			case 9: return;
 		}
 	}
 }
@@ -70,22 +70,21 @@ work create(void) {
 		}
 		work tem_work;
 		memset(&tem_work, 0, sizeof(work));
-
-		printf("You can press Enter to re-enter!\n\n");
+		printf("You can input '.' to re-enter!\n\n");
 		safestr(tem_work.title, sizeof(tem_work.title), "Title of the Work : ");
-		if (tem_work.title[0] == '\0') { is_clear = 1; continue; }
+		if (tem_work.title[0] == '.') { is_clear = 1; continue; }
 
 		safestr(tem_work.author_name, sizeof(tem_work.author_name), "Author's Name: ");
-		if (tem_work.author_name[0] == '\0') { is_clear = 1; continue; }
+		if (tem_work.author_name[0] == '.') { is_clear = 1; continue; }
 
 		safestr(tem_work.student_id, sizeof(tem_work.student_id), "Author's student ID: ");
-		if (tem_work.student_id[0] == '\0') { is_clear = 1; continue; }
+		if (tem_work.student_id[0] == '.') { is_clear = 1; continue; }
 
 		safestr(tem_work.major, sizeof(tem_work.major), "Author's specialty: ");
-		if (tem_work.major[0] == '\0') { is_clear = 1; continue; }
+		if (tem_work.major[0] == '.') { is_clear = 1; continue; }
 
 		safestr(tem_work.grade, sizeof(tem_work.grade), "Author's grade: ");
-		if (tem_work.grade[0] == '\0') { is_clear = 1; continue; }
+		if (tem_work.grade[0] == '.') { is_clear = 1; continue; }
 
 		for (int i = 0;i < 5;++i) tem_work.scores[i] = 0.0;
 		tem_work.is_published = 0;
@@ -97,6 +96,9 @@ void createWork(void) {
 	int is_again = 0, i = 1;
 	while (i) {
 		system("cls");
+		printf("==== Create Work(s) ====\n");
+		printf("Fill in the following fields.\n");
+		printf("Work ID will be assigned automatically.\n\n");
 		if (is_again) printf("Please input the informations again!\n");
 		work tem_work = create();
 		char confirm = safechar("yn", "Confirm this information?(y/n): ");
@@ -135,13 +137,22 @@ void createWork(void) {
 void deleteWork(void) {
 	system("cls");
 	if (!listwork_head) {
-		printf("\nList is empty.\n");
+		printf("List is empty.\n");
 		go_on();
 		return;
 	}
-	int id = safenumber(1, MAX_ID > 0 ? MAX_ID : 1, "Work's ID: ");
+	printf("==== Delete a Work ====\n");
+	printf("Enter the ID of the work you want to delete.\n");
+	printf("Tip: use [3] Query works first if you are not sure of the ID.\n\n");
+	int id = safenumber(0, MAX_ID > 0 ? MAX_ID : 1, "Enter Work ID to delete(enter '0' to return): ");
+	if (id == 0) return;
 	Node** link = find_id(id);
 	if (link) {
+		if ((*link)->data.is_published) {
+			printf("\n[Error] Work ID %d is published and cannot be deleted.\n", id);
+			go_on();
+			return;
+		}
 		print_work(&(*link)->data);
 		char confirm = safechar("yn", "\n\nAre you sure to delete this work? (y/n): ");
 		if (confirm == 'y') {
@@ -150,9 +161,7 @@ void deleteWork(void) {
 		}
 		else printf("\n[Info] Deletion cancelled.\n");
 	}
-	else {
-		printf("\nWork with ID %d not found.\n", id);
-	}
+	else printf("\n[Error] Work ID %d not found.\n", id);
 	go_on();
 }
 void queryWork(void) {
@@ -162,53 +171,121 @@ void queryWork(void) {
 		go_on();
 		return;
 	}
-	printf("\n==== Query Works ====\n");
-	printf("1. Query by ID\n");//ID查找
-	printf("2. Query by Title\n");//作品名查找
-	printf("3. Query by Author Name\n");//作者名查找
-	printf("4. Query by Student ID\n");//作者学号查找
-	printf("5. Query by Keyword\n");//作品名关键词查找
-	int choice = safenumber(1, 5, "Select a query method (1-5): ");
-	printf("\n");
-	work outWork[MAX_RESULT];
-	switch (choice) {
-		case 1: {//找到直接打印并允许退出查询
-			system("cls");
-			int id = safenumber(1, MAX_ID > 0 ? MAX_ID : 1, "Enter Work ID: ");
-			Node** link = find_id(id);
-			if (link) print_work(&(*link)->data);
-			else printf("Work with ID %d not found.\n", id);
-			go_on();
-			break;
+	while (1) {
+		system("cls");
+		printf("\n==== Query Works ====\n");
+		printf("1. Query by ID\n");//ID查找
+		printf("2. Query by Title\n");//作品名查找
+		printf("3. Query by Author Name\n");//作者名查找
+		printf("4. Query by Student ID\n");//作者学号查找
+		printf("5. Query by Keyword\n");//作品名关键词查找
+		printf("0. Return\n");
+		int choice = safenumber(0, 5, "Select a query method (0-5): ");
+		printf("\n");
+		work outWork[MAX_RESULT];
+		switch (choice) {
+			case 0:return;
+			case 1: {//找到直接打印并允许退出查询
+				int id = safenumber(1, MAX_ID > 0 ? MAX_ID : 1, "Enter Work ID: ");
+				Node** link = find_id(id);
+				if (link) print_work(&(*link)->data);
+				else printf("Work with ID %d not found.\n", id);
+				go_on();
+				break;
+			}
+			case 2: {//2、3、4、5都要经过分页层
+				char title[64];
+				safestr(title, sizeof(title), "Enter Title: ");
+				if (!queryOut(outWork, MAX_RESULT, find_by_title, title))
+					printf("No work titled \"%s\".\n", title);
+				break;
+			}
+			case 3: {
+				char author[32];
+				safestr(author, sizeof(author), "Enter Author Name: ");
+				if (!queryOut(outWork, MAX_RESULT, find_by_author, author))
+					printf("No work by author \"%s\".\n", author);
+				break;
+			}
+			case 4: {
+				char stu_id[20];
+				safestr(stu_id, sizeof(stu_id), "Enter Student ID: ");
+				if (!queryOut(outWork, MAX_RESULT, find_by_student_id, stu_id))
+					printf("No work with student ID \"%s\".\n", stu_id);
+				break;
+			}
+			case 5: {
+				char keyword[64];
+				safestr(keyword, sizeof(keyword), "Enter Keyword: ");
+				if (!queryOut(outWork, MAX_RESULT, find_by_keyword, keyword))
+					printf("No work matching \"%s\".\n", keyword);
+				break;
+			}
 		}
-		case 2: {//2、3、4、5都要经过分页层
-			char title[64];
-			safestr(title, sizeof(title), "Enter Title: ");
-			if(!queryOut(outWork, MAX_RESULT, find_by_title, title))
-				printf("No work titled \"%s\".\n", title);
-			break;
+	}
+}
+void modifyWork(void) {
+	system("cls");
+	if (!listwork_head) {
+		printf("List is empty.\n");
+		go_on();
+		return;
+	}
+	while (1) {
+		system("cls");
+		printf("==== Modify a Work ====\n");
+		printf("Enter the ID of the work you want to modify.\n");
+		printf("Tip: use [3] Query works first if you are not sure of the ID.\n");
+		printf("Enter 0 to cancel.\n\n");
+		int id = safenumber(0, MAX_ID > 0 ? MAX_ID : 1, "Work's ID: ");
+		Node** link = find_id(id);
+		if (link) {
+			if ((*link)->data.is_published) {
+				printf("\n[Error] Work ID %d is published and cannot be modified.\n", id);
+				go_on();
+				return;
+			}
+			int i = 1;
+			while (i == 1) {
+				system("cls");
+				printf("\nCurrent work information:\n");
+				print_work_simple(&(*link)->data);
+				printf("\nWhat would you like to modify?\n");
+				printf("1. Title\n");
+				printf("2. Author's information\n");
+				printf("0. Cancel\n");
+				int choice = safenumber(0, 2, "Select a field to modify(0 - 2): ");
+				switch (choice) {
+					case 0:i = 0;break;
+					case 1:MoTitle(link);break;
+					case 2:MoAuthor(link);break;
+				}
+			}
 		}
-		case 3: {
-			char author[32];
-			safestr(author, sizeof(author), "Enter Author Name: ");
-			if (!queryOut(outWork, MAX_RESULT, find_by_author, author))
-				printf("No work by author \"%s\".\n", author);
-			break;
+	}
+}
+void publishWork(void) {
+	system("cls");
+	if (!listwork_head) {
+		printf("List is empty.\n");
+		go_on();
+		return;
+	}
+	while (1) {
+		system("cls");
+		printf("\n==== Publish / Unpublish ====\n");
+		printf("1. Publish one work\n");
+		printf("2. Publish all unpublished\n");
+		printf("3. Unpublish one work\n");
+		printf("0. Back\n");
+		int choice = safenumber(0, 3, "Select an option (0-3): ");
+		switch (choice) {
+			case 0:return;
+			case 1:PubOne();break;
+			case 2:PubAll();break;
+			case 3:UnpubOne();break;
 		}
-		case 4: {
-			char stu_id[20];
-			safestr(stu_id, sizeof(stu_id), "Enter Student ID: ");
-			if (!queryOut(outWork, MAX_RESULT, find_by_student_id, stu_id))
-				printf("No work with student ID \"%s\".\n", stu_id);
-			break;
-		}
-		case 5: {
-			char keyword[64];
-			safestr(keyword, sizeof(keyword), "Enter Keyword: ");
-			if (!queryOut(outWork, MAX_RESULT, find_by_keyword, keyword))
-				printf("No work matching \"%s\".\n", keyword);
-			break;
-		}
+		go_on();
 	}
 }
 
@@ -217,18 +294,37 @@ void queryWork(void) {
 
 
 
-void modifyWork(void) {
 
+
+
+void saveWork(void) {
+	system("cls");
+	if (!listwork_head) {
+		printf("\n[Info] No work to save.\n");
+		go_on();
+		return;
+	}
+	printf("\n[Warning] Saving will overwrite the file. Deleted works cannot be recovered.\n");
+	char c = safechar("yn", "Save now? (y/n): ");
+	if (c == 'n') {
+		printf("[Info] Save Cancel.");
+		return;
+	}
+	WorkToFile();
+	go_on();
+	return;
 }
 
 
 
 
 
-void publishWork(void) {}
-void saveWork(void) {}
+
+
+
 void calcAverageScore(void) {}
 void sortWork(void) {}
+
 
 
 

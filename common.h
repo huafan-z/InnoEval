@@ -5,7 +5,7 @@
 extern Node* listwork_head;
 extern int MAX_ID;
 extern int WORK_SUM;
-
+extern int UNPUBLISH;
 
 
 char safechar(char* allowed, char* msg);
@@ -20,9 +20,12 @@ void printPAGE(const work* outWor, int count);
 int chooserole(void);
 int is_again(void);
 int queryOut(work* outWork, int size, Node* (*tool)(Node*, const char*), const char* userstr);
-
-
-
+void MoTitle(Node** link);
+void MoAuthor(Node** link);
+void MoAu(const char* field, Node** link, char* new, int size, char* old);
+void PubOne(void);
+void PubAll(void);
+void UnpubOne(void);
 
 
 
