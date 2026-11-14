@@ -1,9 +1,11 @@
 #include "admin.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "common.h"
 #include "list.h"
+#define EPS 1e-9
 #define MAX_RESULT 50
 int adm_login(void) {
 	const char* correct_user = "admin";
@@ -37,7 +39,7 @@ int adm_login(void) {
 void adm_run(void) {
 	while (1) {
 		system("cls");
-		printf("====Welcome admin!====\n");
+		printf("==== Welcome admin! ====\n");
 		printf("1. Create work(s)\n");//创建作品
 		printf("2. Delete work\n");//删除作品
 		printf("3. Query works\n");//查询作品
@@ -186,7 +188,8 @@ void queryWork(void) {
 		switch (choice) {
 			case 0:return;
 			case 1: {//找到直接打印并允许退出查询
-				int id = safenumber(1, MAX_ID > 0 ? MAX_ID : 1, "Enter Work ID: ");
+				int id = safenumber(0, MAX_ID > 0 ? MAX_ID : 1, "Enter Work ID('0' to return): ");
+				if (id == 0) break;
 				Node** link = find_id(id);
 				if (link) print_work(&(*link)->data);
 				else printf("Work with ID %d not found.\n", id);
@@ -289,15 +292,6 @@ void publishWork(void) {
 		go_on();
 	}
 }
-
-
-
-
-
-
-
-
-
 void saveWork(void) {
 	system("cls");
 	if (!listwork_head) {
@@ -315,6 +309,22 @@ void saveWork(void) {
 	go_on();
 	return;
 }
+void calcAverageScore(void) {
+	Node* p = listwork_head;
+	while (p != NULL) {
+		if (p->data.is_published == 1) {
+			double sum = 0.0;
+			int i = 0;
+			for (;i < 5;++i) {
+				if (fabs(p->data.scores[i]) < EPS) break;
+				sum += p->data.scores[i];
+			}
+			if (fabs(sum) < EPS) p->data.avg_score = 0.0;
+			else p->data.avg_score = sum / i;
+		}
+		p = p->next;
+	}
+}
 
 
 
@@ -323,10 +333,21 @@ void saveWork(void) {
 
 
 
-void calcAverageScore(void) {}
-void sortWork(void) {}
+/*void sortWork(void) {
+	system("cls");
+	if (!listwork_head || !listwork_head->next) {
+		printf("\n[Info] Not enough works to sort.\n");
+		go_on();
+		return;
+	}
+	printf("==== Sort Works ====\n");
+	printf("1. By ID (Low to High)\n");
+	printf("2. By Average Score (High to Low)\n");
+	printf("0. Return\n");
+	int choice = safenumber(0, 2, "Select sort method (0-2): ");
 
-
+}
+*/
 
 
 

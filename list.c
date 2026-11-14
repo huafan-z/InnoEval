@@ -173,13 +173,16 @@ void WorkToFile(void) {
 	printf("\n[Success] %d work(s) saved.\n", WORK_SUM);
 	return;
 }
-
-
-
-
-
-
-
+/*void sort_IDorAver(Node* head, int tem_SUM) {
+	Node* mid = head;
+	for (int i = 0;i < tem_SUM / 2;++i) mid = mid->next;
+	mid->next = NULL;
+	tem_SUM /= 2;
+	if(head != NULL)
+		sort_IDorAver(head, tem_SUM);
+	
+}
+*/
 
 
 

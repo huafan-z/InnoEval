@@ -4,6 +4,7 @@
 #include "common.h"
 #include "admin.h"
 #include "judge.h"
+int role;
 int main() {
 	if (!loadWorkFromFile()) {
 		printf("System cannot start without data file.\n");
@@ -12,16 +13,16 @@ int main() {
 	}
 	//adm_run();
 	while (1) {
-		int choice = chooserole(),//身份选择
-			adm_pass = 0, jud_pass = 0;//adm或jud的成功登录标志
-		switch (choice) {
-		case 1:adm_pass = adm_login();break;
-		case 2:jud_pass = jud_login();break;
+		role = chooserole();//身份选择
+		int adm_pass = 0, jud_pass = 0;//adm或jud的成功登录标志
+		switch (role) {
+			case 1:adm_pass = adm_login();break;
+			case 2:jud_pass = jud_login();break;
 		}
-		if (adm_pass == 1 && choice == 1) {//登录成功进入adm主界面
+		if (adm_pass == 1 && role == 1) {//登录成功进入adm主界面
 			adm_run();
 		}
-		else if (jud_pass == 1 && choice == 2) {//登录成功进入jud主界面
+		else if (jud_pass == 1 && role == 2) {//登录成功进入jud主界面
 			jud_run();
 		}
 		else continue;

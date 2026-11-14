@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 typedef struct {
     int id;
     char title[64];
@@ -40,7 +42,7 @@ Node* find_by_keyword(Node* p, const char* title);// 5. 按关键词查 (模糊�
 void Publish_All(void);
 
 void WorkToFile(void);
-
+void sort_IDorAver(Node* head);
 
 
 

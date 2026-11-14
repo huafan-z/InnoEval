@@ -6,6 +6,7 @@ extern Node* listwork_head;
 extern int MAX_ID;
 extern int WORK_SUM;
 extern int UNPUBLISH;
+extern int role;
 
 
 char safechar(char* allowed, char* msg);
@@ -16,7 +17,7 @@ void go_on(void);
 void print_work(const work* w);
 void print_work_simple(const work* w);
 void printOnePAGE(const work* outWork, int count);
-void printPAGE(const work* outWor, int count);
+void printPAGE(const work* outWor, int count, int page_size);
 int chooserole(void);
 int is_again(void);
 int queryOut(work* outWork, int size, Node* (*tool)(Node*, const char*), const char* userstr);

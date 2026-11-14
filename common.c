@@ -116,7 +116,8 @@ void print_work(const work* w) {//打印一个作品
 void print_work_simple(const work* w) {//打印一个作品的简单信息
 	printf("Work ID: %d   ", w->id);
 	printf("Title: %s   ", w->title);
-	printf("Author Name: %s\n", w->author_name);
+	if (role == 1) printf("Author Name: %s   ", w->author_name);
+	printf("Average: %.2f\n", w->avg_score);
 }
 int chooserole(void) {
 	printf("\n====Welcome to use the system!====\n\n1.admin\n2.judge\n");
@@ -138,7 +139,9 @@ void printOnePAGE(const work* outWork, int count) {
 			print_work_simple(&outWork[j]);
 		}
 		printf("\nPage 1 | %d work(s) in total\n", count);
-		char c = safechar("qs","[q] Quit  [s] Select: ");
+		char c;
+		if(role == 1) c = safechar("qs","[q] Quit  [s] Select : ");
+		else if(role == 2) c = safechar("q", "[q] Quit : ");
 		switch (c) {
 			case 'q': return;
 			case 's': {
@@ -151,30 +154,32 @@ void printOnePAGE(const work* outWork, int count) {
 		}
 	}
 }
-void printPAGE(const work* outWork,int count) {
+void printPAGE(const work* outWork,int count,int page_size) {
 	int i = 0, at_edge;
 	while (i < count) {
 		system("cls");
-		for (int j = 0;j < PAGE_SIZE && i + j < count;++j) {
+		for (int j = 0;j < page_size && i + j < count;++j) {
 			printf("%d. ", i + j + 1);
 			print_work_simple(&outWork[i + j]);
 		}
-		printf("Page %d/%d | %d work(s) in total", (i + PAGE_SIZE) / PAGE_SIZE, (count + PAGE_SIZE - 1) / PAGE_SIZE, count);
+		printf("Page %d/%d | %d work(s) in total", (i + page_size) / page_size, (count + page_size - 1) / page_size, count);
 		if (i == 0) printf(" | First page");
-		else if (i + PAGE_SIZE >= count) printf(" | Last page");
+		else if (i + page_size >= count) printf(" | Last page");
 		if (at_edge) printf("  *already here*");
 		printf("\n");
 		at_edge = 0;
-		char choice = safechar("pnqs","[p] Prev  [n] Next  [q] Quit  [s] Select: ");
+		char choice;
+		if (role == 1) choice = safechar("pnqs","[p] Prev  [n] Next  [q] Quit  [s] Select : ");
+		else if(role == 2) choice = safechar("pnq", "[p] Prev  [n] Next  [q] Quit : ");
 		switch (choice) {
 			case 'p':
 				if (i != 0)
-					i -= PAGE_SIZE;
+					i -= page_size;
 				else at_edge = 1;
 				continue;
 			case 'n':
-				if (i + PAGE_SIZE < count)
-					i += PAGE_SIZE;
+				if (i + page_size < count)
+					i += page_size;
 				else at_edge = 1;
 				continue;
 			case 'q': return;
@@ -203,7 +208,7 @@ int queryOut(work* outWork, int size, Node* (*tool)(Node*, const char*), const c
 	}
 	if (count == 0) return 0;
 	else if (count <= PAGE_SIZE) printOnePAGE(outWork, count);
-	else printPAGE(outWork, count);
+	else printPAGE(outWork, count, PAGE_SIZE);
 	return 1;
 }
 void MoTitle(Node** link) {
@@ -240,17 +245,17 @@ void MoAuthor(Node** link) {
 			}
 			case 2: {
 				char stu_id[20];
-				MoAu("Author Student ID", link, stu_id, sizeof(stu_id), (*link)->data.student_id);
+				MoAu("Student ID", link, stu_id, sizeof(stu_id), (*link)->data.student_id);
 				break;
 			}
 			case 3: {
 				char major[64];
-				MoAu("Author Major", link, major, sizeof(major), (*link)->data.major);
+				MoAu("Major", link, major, sizeof(major), (*link)->data.major);
 				break;
 			}
 			case 4: {
 				char grade[16];
-				MoAu("Author Grade", link, grade, sizeof(grade), (*link)->data.grade);
+				MoAu("Grade", link, grade, sizeof(grade), (*link)->data.grade);
 				break;
 			}
 		}
@@ -262,7 +267,7 @@ void MoAu(const char* field, Node** link, char* new, int size, char* old) {
 	print_work_simple(&(*link)->data);
 	printf("\nOld Title: \"%s\" -> ", old);
 	safestr(new, size, "\nNow Title: ");
-	printf("Change Title from \"%s\" to \"%s\"?\n", old, new);
+	printf("Change %s from \"%s\" to \"%s\"?\n", field, old, new);
 	char c = safechar("yn", "Confirm? (y/n): ");
 	if (c == 'y') {
 		if (strcmp(field, "Author Name") == 0) strcpy_s((*link)->data.author_name, sizeof((*link)->data.author_name), new);
