@@ -11,29 +11,3 @@ void queryWork(void);
 void modifyWork(void);
 void publishWork(void);
 void saveWork(void);
-void calcAverageScore(void);
-void sortWork(void);
-
-
-
-
-
-
-
-void list_adm_run(void);
-void list_queryWork(void);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

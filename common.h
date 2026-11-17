@@ -1,17 +1,18 @@
 #pragma once
 #include "list.h"
 
-
+extern const char current_judge[20];
 extern Node* listwork_head;
-extern int MAX_ID;
-extern int WORK_SUM;
 extern int UNPUBLISH;
+extern int WORK_SUM;
+extern int PUBLISH;
+extern int MAX_ID;
 extern int role;
 
-
-char safechar(char* allowed, char* msg);
-void safelogin(char* str, int n, char* msg);
-void safestr(char* str, int n, char* msg);
+void safe_password(char* str, int size, const char* prompt);
+char safechar(const char* allowed, const char* msg);
+void safelogin(char* str, int n, const char* msg);
+void safestr(char* str, int n, const char* msg);
 int safenumber(int min, int max, char* msg);
 void go_on(void);
 void print_work(const work* w);
@@ -23,18 +24,9 @@ int is_again(void);
 int queryOut(work* outWork, int size, Node* (*tool)(Node*, const char*), const char* userstr);
 void MoTitle(Node** link);
 void MoAuthor(Node** link);
-void MoAu(const char* field, Node** link, char* new, int size, char* old);
 void PubOne(void);
 void PubAll(void);
 void UnpubOne(void);
-
-
-
-
-
-
-
-
-
-
-
+void Save(void);
+void sortWork(void);
+int exit_check_save(void);

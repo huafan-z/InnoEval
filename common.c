@@ -1,17 +1,41 @@
 #include "common.h"
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "list.h"
-#define EPS 1e-9
-#define PAGE_SIZE 5
-static void Mo_confirm(const char* field, char c) {
-	if (c == 'y') printf("\n[Success] %s updated.\n", field);
-	else printf("\n[Info] Change cancelled.\n");
-	go_on();
+#include <conio.h>
+
+#define PAGE_SIZE 3
+
+static void MoAu(const char* field, Node** link, char* new, int size, char* old);
+static void Mo_confirm(const char* field, char c);
+
+void safe_password(char* str, int size, const char* prompt) {
+	int i = 0;
+	char ch;
+	printf("%s", prompt);
+	while (1) {
+		ch = _getch(); // 读取字符但不回显
+		if (ch == '\r') { // 按下回车
+			str[i] = '\0';
+			printf("\n");
+			break;
+		}
+		else if (ch == 8) { // 按下退格键
+			if (i > 0) {
+				i--;
+				printf("\b \b"); // 光标退一格，空格擦除，再退一格
+			}
+		}
+		else if (ch >= 32 && ch <= 126) { // 可打印 ASCII 字符
+			if (i < size - 1) {
+				str[i++] = ch;
+				printf("*"); // 屏幕显示星号
+			}
+		}
+	}
 }
-char safechar(char* allowed, char* prompt) {//安全输入char,allowed按顺序输入，例：yYnN
+char safechar(const char* allowed, const char* prompt) {//安全输入char,allowed按顺序输入，例：yYnN
 	char c;
 	int tmp;//清理缓冲区的垃圾桶
 	while (1) {
@@ -21,10 +45,8 @@ char safechar(char* allowed, char* prompt) {//安全输入char,allowed按顺序�
 			while ((tmp = getchar()) != '\n' && tmp != EOF);
 			continue;
 		}
-		if (c == '\n') { // 用户直接回车
-			printf("\n[Error] Empty input. Please try again!\n");
+		if (c == '\n') // 用户直接回车
 			continue;
-		}
 		tmp = getchar();//如果没有第二个字符，tem将为‘n\’
 		if (tmp != '\n' && tmp != EOF) {
 			printf("\n[Error] Only one char allowed. Please try again!\n");
@@ -36,13 +58,13 @@ char safechar(char* allowed, char* prompt) {//安全输入char,allowed按顺序�
 			printf("\n[Error] Invalid input. Use");
 			for (const char* p = allowed; *p; ++p) printf(" %c", *p);
 			printf(".\n");
-		}	
-	} 
+		}
+	}
 }
-void safelogin(char* str, int n, char* prompt) {//仅用于login界面，安全登录
+void safelogin(char* str, int size, const char* prompt) {//仅用于login界面，安全登录
 	while (1) {
 		printf("%s", prompt);
-		if (fgets(str, n, stdin) == NULL) continue;
+		if (fgets(str, size, stdin) == NULL) continue;
 		if (strchr(str, '\n') == NULL) {
 			int tem;
 			while ((tem = getchar()) != '\n' && tem != EOF);
@@ -53,7 +75,7 @@ void safelogin(char* str, int n, char* prompt) {//仅用于login界面，安全�
 		return;
 	}
 }
-void safestr(char *str, int n, char* prompt) {//仅用于char数组，安全输入字符串
+void safestr(char* str, int n, const char* prompt) {//仅用于char数组，安全输入字符串
 	while (1) {
 		printf("%s", prompt);
 		//判断是否是空字符
@@ -71,9 +93,9 @@ void safestr(char *str, int n, char* prompt) {//仅用于char数组，安全输�
 		return;
 	}
 }
-int safenumber(int min, int max, char *prompt) {//安全输入数字
+int safenumber(int min, int max, char* prompt) {//安全输入数字
 	int num;
-	char str[5];
+	char str[32];
 	while (1) {
 		safestr(str, sizeof(str), prompt);
 		//判断是否是数字
@@ -91,7 +113,8 @@ int safenumber(int min, int max, char *prompt) {//安全输入数字
 		num = atoi(str);//确认是数字，安全输入
 		// 范围校验
 		if (num < min || num > max) {
-			printf("\n[Error] Out of range. Must be between %d and %d !\n", min, max);
+			if (min == max) printf("\n[Error] Out of range. Only %d is allowed!\n", min);
+			else printf("\n[Error] Out of range. Must be between %d and %d !\n", min, max);
 			continue;
 		}
 		return num;
@@ -99,7 +122,8 @@ int safenumber(int min, int max, char *prompt) {//安全输入数字
 }
 void go_on(void) {
 	printf("\nPress Enter...");
-	getchar();
+	int c;
+	while ((c = getchar()) != '\n' && c != EOF);
 }
 void print_work(const work* w) {//打印一个作品
 	printf("\nWork ID: %d\n", w->id);
@@ -109,23 +133,38 @@ void print_work(const work* w) {//打印一个作品
 	printf("Major: %s\n", w->major);
 	printf("Grade: %s\n", w->grade);
 	printf("Publish Status: %s\n", w->is_published ? "Published" : "Unpublished");
-	printf("Existing Scores: ");
-	for (int i = 0; i < 5; i++) printf(" %.1f ", w->scores[i]);
+	printf("Existing Scores:\n");
+	int has_score = 0;
+	for (int i = 0; i < 5; i++) {
+		if (w->judge[i][0] != '\0') {
+			printf("  [%d] Judge: %-15s Score: %.1f\n", i + 1, w->judge[i], w->scores[i]);
+			has_score = 1;
+		}
+	}
+	if (!has_score) printf("  No scores yet.\n");
 	printf("\nAverage Score: %.2f\n", w->avg_score);
 }
 void print_work_simple(const work* w) {//打印一个作品的简单信息
-	printf("Work ID: %d   ", w->id);
-	printf("Title: %s   ", w->title);
-	if (role == 1) printf("Author Name: %s   ", w->author_name);
-	printf("Average: %.2f\n", w->avg_score);
+	char display_title[21];
+	strcpy_s(display_title, sizeof(display_title), w->title);
+	if (strlen(w->title) > 20) {
+		display_title[17] = '.';
+		display_title[18] = '.';
+		display_title[19] = '.';
+		display_title[20] = '\0';
+	}
+	printf("Work ID:%-7d", w->id);
+	printf("Title:%-20s", w->title);
+	if (role == 1) printf("Author Name:%-15s", w->author_name);
+	printf("Average:%.2f\n", w->avg_score);
 }
 int chooserole(void) {
-	printf("\n====Welcome to use the system!====\n\n1.admin\n2.judge\n");
+	printf("\n====Welcome to use the system!====\n\n1.admin\n2.judge\n\n");
 	int choice = safenumber(1, 2, "Please choose your identity(1 or 2): ");
 	return choice;
 }
 int is_again(void) {
-	char ch = safechar("yn","Do you want to use the system again now?(y/n): ");
+	char ch = safechar("yn", "Do you want to use the system again now?(y/n): ");
 	if (ch == 'y') {
 		return 1;
 	}
@@ -135,13 +174,14 @@ void printOnePAGE(const work* outWork, int count) {
 	while (1) {
 		system("cls");
 		for (int j = 0;j < count;++j) {
-			printf("%d. ", j + 1);
+			printf("%d.     ", j + 1);
 			print_work_simple(&outWork[j]);
 		}
-		printf("\nPage 1 | %d work(s) in total\n", count);
+		printf("\nPage 1  |  %d work(s) in total\n\n", count);
 		char c;
-		if(role == 1) c = safechar("qs","[q] Quit  [s] Select : ");
-		else if(role == 2) c = safechar("q", "[q] Quit : ");
+		if (role == 1) c = safechar("qs", "[q] Quit    [s] Select : ");
+		else if (role == 2) c = safechar("q", "[q] Quit : ");
+		printf("\n");
 		switch (c) {
 			case 'q': return;
 			case 's': {
@@ -154,23 +194,24 @@ void printOnePAGE(const work* outWork, int count) {
 		}
 	}
 }
-void printPAGE(const work* outWork,int count,int page_size) {
-	int i = 0, at_edge;
+void printPAGE(const work* outWork, int count, int page_size) {
+	int i = 0, at_edge = 0;
 	while (i < count) {
 		system("cls");
 		for (int j = 0;j < page_size && i + j < count;++j) {
-			printf("%d. ", i + j + 1);
+			printf("%d.     ", i + j + 1);
 			print_work_simple(&outWork[i + j]);
 		}
-		printf("Page %d/%d | %d work(s) in total", (i + page_size) / page_size, (count + page_size - 1) / page_size, count);
-		if (i == 0) printf(" | First page");
-		else if (i + page_size >= count) printf(" | Last page");
+		printf("Page %d/%d  |  %d work(s) in total", (i + page_size) / page_size, (count + page_size - 1) / page_size, count);
+		if (i == 0) printf("  |  First page");
+		else if (i + page_size >= count) printf("  |  Last page");
 		if (at_edge) printf("  *already here*");
-		printf("\n");
+		printf("\n\n");
 		at_edge = 0;
 		char choice;
-		if (role == 1) choice = safechar("pnqs","[p] Prev  [n] Next  [q] Quit  [s] Select : ");
-		else if(role == 2) choice = safechar("pnq", "[p] Prev  [n] Next  [q] Quit : ");
+		if (role == 1) choice = safechar("pnqs", "[p] Prev    [n] Next    [q] Quit    [s] Select : ");
+		else if (role == 2) choice = safechar("pnq", "[p] Prev    [n] Next    [q] Quit : ");
+		printf("\n");
 		switch (choice) {
 			case 'p':
 				if (i != 0)
@@ -218,7 +259,7 @@ void MoTitle(Node** link) {
 	print_work_simple(&(*link)->data);
 	printf("\nOld Title: \"%s\" -> ", (*link)->data.title);
 	safestr(new_title, sizeof(new_title), "\nNow Title: ");
-	printf("Change Title from \"%s\" to \"%s\"?\n", (*link)->data.title, new_title);
+	printf("\nChange Title from \"%s\" to \"%s\"?\n", (*link)->data.title, new_title);
 	char c = safechar("yn", "Confirm? (y/n): ");
 	if (c == 'y') strcpy_s((*link)->data.title, sizeof((*link)->data.title), new_title);
 	Mo_confirm("Title", c);
@@ -226,15 +267,14 @@ void MoTitle(Node** link) {
 void MoAuthor(Node** link) {
 	while (1) {
 		system("cls");
-		char new_title[64];
 		printf("\nCurrent work information:\n");
 		print_work_simple(&(*link)->data);
-		printf("\nWhat would you like to modify?\n");
-		printf("\n1. Old Author Name: \"%s\"\n", (*link)->data.author_name);
-		printf("\n2. Old Student ID: \"%s\"\n", (*link)->data.student_id);
-		printf("\n3. Old Major: \"%s\"\n", (*link)->data.major);
-		printf("\n4. Old Grade: \"%s\"\n", (*link)->data.grade);
-		printf("\n0. Return\n");
+		printf("\nWhat would you like to modify?\n\n");
+		printf("1. Old Author Name: \"%s\"\n", (*link)->data.author_name);
+		printf("2. Old Student ID: \"%s\"\n", (*link)->data.student_id);
+		printf("3. Old Major: \"%s\"\n", (*link)->data.major);
+		printf("4. Old Grade: \"%s\"\n", (*link)->data.grade);
+		printf("0. Return\n\n");
 		int choice = safenumber(0, 4, "Select a field to modify(0 - 4): ");
 		switch (choice) {
 			case 0: return;
@@ -261,12 +301,15 @@ void MoAuthor(Node** link) {
 		}
 	}
 }
-void MoAu(const char* field, Node** link, char* new, int size, char* old) {
+static void MoAu(const char* field, Node** link, char* new, int size, char* old) {
 	system("cls");
 	printf("\nCurrent work information:\n");
 	print_work_simple(&(*link)->data);
-	printf("\nOld Title: \"%s\" -> ", old);
-	safestr(new, size, "\nNow Title: ");
+	printf("\nOld %s: \"%s\" -> ", field, old);
+	char prompt[64];
+	sprintf_s(prompt, sizeof(prompt), "\nNow %s: ", field);
+	safestr(new, size, prompt);
+	printf("\n");
 	printf("Change %s from \"%s\" to \"%s\"?\n", field, old, new);
 	char c = safechar("yn", "Confirm? (y/n): ");
 	if (c == 'y') {
@@ -277,28 +320,33 @@ void MoAu(const char* field, Node** link, char* new, int size, char* old) {
 	}
 	Mo_confirm(field, c);
 }
+static void Mo_confirm(const char* field, char c) {
+	if (c == 'y') printf("\n[Success] %s updated.", field);
+	else printf("\n[Info] Change cancelled.");
+	go_on();
+}
 void PubOne(void) {
 	system("cls");
-	int id = safenumber(0, MAX_ID > 0 ? MAX_ID : 1, "Enter Work ID to publish(enter '0' to return): ");
+	int id = safenumber(0, MAX_ID, "Enter Work ID to publish(enter '0' to return): ");
 	if (id == 0) return;
 	Node** link = find_id(id);
 	if (link) {
-		if ((*link)->data.is_published) {
+		if ((*link)->data.is_published == 1) {
 			printf("\n[Info] Work ID %d is already published.\n", id);
-			go_on();
 			return;
 		}
 		print_work(&(*link)->data);
 		char confirm = safechar("yn", "Publish this work? (y/n): ");
+		system("cls");
 		if (confirm == 'y') {
 			(*link)->data.is_published = 1;
 			--UNPUBLISH;
+			++PUBLISH;
 			printf("\n[Success] Publish ID %d.\n", id);
 		}
 		else printf("\n[Info] Publish cancelled.\n");
 	}
 	else printf("\n[Error] Work ID %d not found.\n", id);
-	go_on();
 }
 void PubAll(void) {
 	if (UNPUBLISH == 0) {
@@ -310,13 +358,14 @@ void PubAll(void) {
 	if (c == 'y') {
 		Publish_All();
 		printf("\n[Success] %d work(s) published.\n", UNPUBLISH);
+		PUBLISH += UNPUBLISH;
 		UNPUBLISH = 0;
 	}
 	else printf("\n[Info] Publish cancelled.\n");
 }
 void UnpubOne(void) {
 	system("cls");
-	int id = safenumber(0, MAX_ID > 0 ? MAX_ID : 1, "Enter Work ID to unpublish: (enter '0' to return): ");
+	int id = safenumber(0, MAX_ID, "Enter Work ID to unpublish: (enter '0' to return): ");
 	if (id == 0) return;
 	Node** link = find_id(id);
 	if (link) {
@@ -325,25 +374,52 @@ void UnpubOne(void) {
 			return;
 		}
 		print_work(&(*link)->data);
-		double sum = 0.0;
-		for (int i = 0;i < 5;++i) sum += (*link)->data.scores[i];
-		if (fabs(sum) > EPS) {
+		if ((*link)->data.judge[0][0] != '\0') {
 			printf("\n[Error] Work ID %d has scores and cannot be unpublished.\n", id);
 			return;
 		}
 		char confirm = safechar("yn", "Unpublish this work? (y/n): ");
 		if (confirm == 'y') {
 			(*link)->data.is_published = 0;
-			--UNPUBLISH;
+			++UNPUBLISH;
+			--PUBLISH;
 			printf("\n[Success] Unpublish ID %d.\n", id);
 		}
 		else printf("\n[Info] Unpublish cancelled.\n");
 	}
 	else printf("\n[Error] Work ID %d not found.\n", id);
 }
+void Save(void) {
+	int result = WorkToFile();
+	switch (result) {
+		case 0:printf("\n[Success] %d work(s) saved.", WORK_SUM);break;
+		case 1:printf("\n[Error] Cannot create 'worklist.tmp'.");break;
+		case 2:printf("\n[Error] Write error occurred.");break;
+		case 3:printf("\n[Error] Flush failed.");break;
+		case 4:printf("\n[Error] Close failed.");break;
+		case 5:printf("\n[Error] Replace failed. Original may be lost.");break;
+	}
+}
+int exit_check_save(void) {
+	system("cls");
+	printf("==== Exit System ====\n");
+	printf("[Warning] Unsaved changes will be lost after exiting.\n\n");
 
+	char c = safechar("yn", "Do you want to save before exiting? (y/n): ");
 
-
-
-
-
+	if (c == 'y') {
+		if (!listwork_head) {
+			printf("\n[Info] No works to save.\n");
+			go_on();
+			return 1;
+		}
+		WorkToFile();
+		go_on();
+		return 1;
+	}
+	else {
+		char confirm = safechar("yn", "\n[Warning] All unsaved changes will be LOST. Confirm exit? (y/n): ");
+		if (confirm == 'y') return 1; // 确认退出
+		else return 0; // 取消退出
+	}
+}

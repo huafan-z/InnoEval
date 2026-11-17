@@ -11,8 +11,10 @@ int main() {
 		go_on();
 		return 1;// 不进系统
 	}
-	//adm_run();
+	//role = 1;adm_run();
+	//role = 2;jud_run();
 	while (1) {
+		system("cls");
 		role = chooserole();//身份选择
 		int adm_pass = 0, jud_pass = 0;//adm或jud的成功登录标志
 		switch (role) {
